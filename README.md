@@ -2,6 +2,8 @@
  
 Questo progetto contiene i file di un sito web che permette di cercare parole in dialetto trentino dentro un database excel, in modo semplice e veloce.
 
+Analisi dei requisiti (RE) disponibile [qui](https://docs.google.com/document/d/1UwrbHYbU9CWfF6wtS21rGHwb0z-wfi7FUpjAFH0owpM/edit?usp=sharing).
+
 ## 🚀 Obiettivo del progetto
 
 L’idea è creare un sito pubblico dove chiunque possa:
