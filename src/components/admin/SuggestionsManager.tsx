@@ -84,6 +84,7 @@ export function SuggestionsManager() {
         category: (suggestion.category as GrammarCategory) || 'sostantivo',
         definition: suggestion.definition,
         examples: suggestion.examples,
+        pronunciation: suggestion.pronunciation,
       }]);
     
     if (insertError) {
