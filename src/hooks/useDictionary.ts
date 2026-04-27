@@ -11,7 +11,7 @@ export function useDictionary() {
       const { data, error } = await supabase
         .from('dictionary_entries')
         .select('*')
-        .order('dialect_word');
+        .order('dialect_word', { ascending: true });
       
       if (error) {
         console.error('Errore nel caricamento del dizionario:', error);
