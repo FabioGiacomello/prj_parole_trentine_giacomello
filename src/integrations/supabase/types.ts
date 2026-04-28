@@ -1,3 +1,4 @@
+// Tipi generati da Supabase CLI — ultima sincronizzazione 28/04/2026
 export type Json =
   | string
   | number
