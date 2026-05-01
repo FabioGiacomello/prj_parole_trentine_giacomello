@@ -401,3 +401,6 @@ Durante lo sviluppo del progetto è stata utilizzata l'intelligenza artificiale 
 Tuttavia, tutte le decisioni progettuali, la scelta delle tecnologie, la progettazione del database, la revisione del codice e il testing sono stati effettuati dagli studenti. L'IA è stata usata come assistente, non come sostituto del lavoro umano: ogni output generato è stato valutato, adattato e integrato consapevolmente nel progetto dal team.
 
 Il contenuto linguistico (vocaboli, traduzioni, esempi d'uso) proviene interamente dalle fonti bibliografiche citate nella sezione Fonti della pagina Il Progetto, ed è stato curato con la supervisione della prof.ssa Patrizia Cordin.
+
+---
+> Versione documentazione: 1.0 — revisione finale maggio 2026
