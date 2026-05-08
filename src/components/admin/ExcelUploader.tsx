@@ -67,6 +67,7 @@ export function ExcelUploader() {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<{ success: number; errors: number; total: number } | null>(null);
+  const [errorDetails, setErrorDetails] = useState<string[]>([]);
   const { toast } = useToast();
 
   const parseCategory = (cat: string | undefined): GrammarCategory => {
@@ -83,6 +84,18 @@ export function ExcelUploader() {
 
   // Normalizza una riga indipendentemente dal formato sorgente
   const normalizeRow = (row: ExcelRow | SourceRow): ExcelRow | null => {
+    const raw = row as Record<string, unknown>;
+    const keys = Object.keys(raw);
+
+    // Formato semplice 2 colonne: dialetto, italiano
+    if (keys.length === 2) {
+      return {
+        parola_dialettale: String(raw[keys[0]] ?? '').trim(),
+        parola_italiana: String(raw[keys[1]] ?? '').trim(),
+        categoria: 'sostantivo',
+      };
+    }
+
     // Formato sorgente AA/BB (colonne: Voce, Cat, Italiano)
     if ('Voce' in row && row.Voce) {
       return {
@@ -101,6 +114,7 @@ export function ExcelUploader() {
     setUploading(true);
     setProgress(0);
     setResults(null);
+    setErrorDetails([]);
 
     try {
       const data = await file.arrayBuffer();
@@ -108,19 +122,34 @@ export function ExcelUploader() {
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
       const jsonData = XLSX.utils.sheet_to_json<ExcelRow | SourceRow>(worksheet);
+      const cleanedData = jsonData.map(row => {
+        const cleaned: Record<string, unknown> = {};
+        for (const [key, value] of Object.entries(row as Record<string, unknown>)) {
+          cleaned[key.replace(/^\uFEFF/, '')] = value;
+        }
+        return cleaned as ExcelRow | SourceRow;
+      });
 
-      const total = jsonData.length;
+      const total = cleanedData.length;
       let success = 0;
       let errors = 0;
+      const skippedRows: string[] = [];
 
       // Elabora in gruppi da 50 voci per non sovraccaricare il database
       const batchSize = 50;
-      for (let i = 0; i < jsonData.length; i += batchSize) {
-        const batch = jsonData.slice(i, i + batchSize);
+      for (let i = 0; i < cleanedData.length; i += batchSize) {
+        const batch = cleanedData.slice(i, i + batchSize);
 
         const entries = batch
-          .map(row => normalizeRow(row))
-          .filter((r): r is ExcelRow => r !== null && Boolean(r.parola_dialettale) && Boolean(r.parola_italiana))
+          .map((row, index) => {
+            const normalized = normalizeRow(row);
+            if (!normalized || !normalized.parola_dialettale?.trim() || !normalized.parola_italiana?.trim()) {
+              skippedRows.push(`Riga ${i + index + 2}: dati mancanti o formato non valido`);
+              return null;
+            }
+            return normalized;
+          })
+          .filter((r): r is ExcelRow => r !== null)
           .map(row => ({
             dialect_word: row.parola_dialettale.trim(),
             italian_word: row.parola_italiana.trim(),
@@ -141,7 +170,8 @@ export function ExcelUploader() {
 
         if (error) {
           console.error('Errore nel batch di importazione:', error);
-          errors += batch.length;
+          errors += entries.length;
+          skippedRows.push(`Batch ${Math.floor(i / batchSize) + 1}: ${error.message}`);
         } else {
           success += entries.length;
         }
@@ -149,7 +179,8 @@ export function ExcelUploader() {
         setProgress(Math.round(((i + batch.length) / total) * 100));
       }
 
-      setResults({ success, errors, total });
+      setErrorDetails(skippedRows);
+      setResults({ success, errors: Math.max(total - success, 0), total });
 
       if (errors === 0) {
         toast({ title: 'Importazione completata', description: `${success} vocaboli importati con successo.` });
@@ -260,9 +291,21 @@ export function ExcelUploader() {
               </span>
             </div>
             {results.errors > 0 && (
-              <p className="text-sm text-muted-foreground mt-1">
-                {results.errors} righe non importate (dati mancanti o errori di inserimento).
-              </p>
+              <>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {results.errors} righe non importate (dati mancanti o errori di inserimento).
+                </p>
+                {errorDetails.length > 0 && (
+                  <details className="mt-2">
+                    <summary className="cursor-pointer text-sm font-medium">Dettagli errori</summary>
+                    <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+                      {errorDetails.slice(0, 15).map((detail) => (
+                        <li key={detail}>{detail}</li>
+                      ))}
+                    </ul>
+                  </details>
+                )}
+              </>
             )}
           </div>
         )}
