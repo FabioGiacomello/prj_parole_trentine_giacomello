@@ -138,6 +138,30 @@ export type Database = {
         }
         Relationships: []
       }
+      word_views: {
+        Row: {
+          id: string
+          dialect_word: string
+          italian_word: string
+          view_count: number
+          last_viewed_at: string
+        }
+        Insert: {
+          id?: string
+          dialect_word: string
+          italian_word: string
+          view_count?: number
+          last_viewed_at?: string
+        }
+        Update: {
+          id?: string
+          dialect_word?: string
+          italian_word?: string
+          view_count?: number
+          last_viewed_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -149,6 +173,13 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_word_view: {
+        Args: {
+          p_dialect_word: string
+          p_italian_word: string
+        }
+        Returns: undefined
       }
     }
     Enums: {

@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-
-const WORD_VIEWS_KEY = 'dizionario-trentino-word-views';
+import { supabase } from '@/integrations/supabase/client';
 
 interface WordViewStat {
   dialectWord: string;
@@ -9,44 +8,42 @@ interface WordViewStat {
 }
 
 export function useWordViews() {
-  const [wordViews, setWordViews] = useState<Record<string, WordViewStat>>({});
+  const [mostViewed, setMostViewed] = useState<WordViewStat[]>([]);
+
+  const fetchMostViewed = async () => {
+    const { data, error } = await supabase
+      .from('word_views')
+      .select('dialect_word, italian_word, view_count')
+      .order('view_count', { ascending: false })
+      .limit(5);
+
+    if (!error && data) {
+      setMostViewed(data.map(d => ({
+        dialectWord: d.dialect_word,
+        italianWord: d.italian_word,
+        viewCount: d.view_count,
+      })));
+    }
+  };
 
   useEffect(() => {
-    const stored = localStorage.getItem(WORD_VIEWS_KEY);
-    if (stored) {
-      try {
-        setWordViews(JSON.parse(stored));
-      } catch {
-        setWordViews({});
-      }
-    }
+    fetchMostViewed();
   }, []);
 
-  const incrementWordView = (dialectWord: string, italianWord: string) => {
-    setWordViews(prev => {
-      const key = dialectWord.toLowerCase();
-      const updated = {
-        ...prev,
-        [key]: {
-          dialectWord,
-          italianWord,
-          viewCount: (prev[key]?.viewCount ?? 0) + 1
-        }
-      };
-      localStorage.setItem(WORD_VIEWS_KEY, JSON.stringify(updated));
-      return updated;
+  const incrementWordView = async (dialectWord: string, italianWord: string) => {
+    await supabase.rpc('increment_word_view', {
+      p_dialect_word: dialectWord.toLowerCase(),
+      p_italian_word: italianWord,
     });
+    fetchMostViewed();
   };
 
   const getMostViewedWords = (limit = 5): WordViewStat[] => {
-    return Object.values(wordViews)
-      .sort((a, b) => b.viewCount - a.viewCount)
-      .slice(0, limit);
+    return mostViewed.slice(0, limit);
   };
 
   return {
-    wordViews,
     incrementWordView,
-    getMostViewedWords
+    getMostViewedWords,
   };
 }
