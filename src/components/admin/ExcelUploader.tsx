@@ -110,6 +110,16 @@ export function ExcelUploader() {
     return null;
   };
 
+  const isAaBbFormat = (keys: string[]): boolean => {
+    const normalized = keys.map((k) => k.replace(/^\uFEFF/, '').trim().toLowerCase());
+    return normalized.includes('voce') && normalized.includes('cat') && normalized.includes('italiano');
+  };
+
+  const isInternalFormat = (keys: string[]): boolean => {
+    const normalized = keys.map((k) => k.replace(/^\uFEFF/, '').trim().toLowerCase());
+    return normalized.includes('parola_dialettale') && normalized.includes('parola_italiana');
+  };
+
   const processExcelFile = async (file: File) => {
     setUploading(true);
     setProgress(0);
@@ -131,6 +141,16 @@ export function ExcelUploader() {
       });
 
       const total = cleanedData.length;
+      const firstRowKeys = Object.keys((cleanedData[0] ?? {}) as Record<string, unknown>);
+      if (!total || (!isAaBbFormat(firstRowKeys) && !isInternalFormat(firstRowKeys) && firstRowKeys.length !== 2)) {
+        toast({
+          variant: 'destructive',
+          title: 'Formato CSV non supportato',
+          description: 'Usa il formato AA/BB con colonne Num, Tipo, Voce, Cat, Italiano, Et_Audio oppure il formato interno parola_dialettale/parola_italiana.'
+        });
+        return;
+      }
+
       let success = 0;
       let errors = 0;
       const skippedRows: string[] = [];
@@ -163,15 +183,16 @@ export function ExcelUploader() {
 
         const { error } = await supabase
           .from('dictionary_entries')
-          .upsert(entries, {
-            onConflict: 'dialect_word',
-            ignoreDuplicates: false
-          });
+          .insert(entries);
 
         if (error) {
           console.error('Errore nel batch di importazione:', error);
           errors += entries.length;
-          skippedRows.push(`Batch ${Math.floor(i / batchSize) + 1}: ${error.message}`);
+          if (error.message.includes('no unique or exclusion constraint matching the ON CONFLICT specification')) {
+            skippedRows.push('Configurazione DB: manca un vincolo UNIQUE su dialect_word. Import eseguito in modalita inserimento puro.');
+          } else {
+            skippedRows.push(`Batch ${Math.floor(i / batchSize) + 1}: ${error.message}`);
+          }
         } else {
           success += entries.length;
         }
