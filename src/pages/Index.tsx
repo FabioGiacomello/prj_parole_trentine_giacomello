@@ -45,8 +45,14 @@ export default function Index() {
 
   const mostViewed = getMostViewedWords(5);
 
-  const handleSearch = (query: string, filters: SearchFilters) => {
-    const searchResults = search(query, filters);
+  const handleSearch = (query: string, filters: SearchFilters, isLetterFilter = false) => {
+    if (!query.trim()) {
+      setResults([]);
+      setCurrentQuery('');
+      setHasSearched(false);
+      return;
+    }
+    const searchResults = search(query, filters, isLetterFilter);
     setResults(searchResults);
     setCurrentQuery(query);
     setHasSearched(true);

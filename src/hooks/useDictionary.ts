@@ -36,17 +36,25 @@ export function useDictionary() {
     fetchEntries();
   }, []);
 
-  const search = (query: string, filters: SearchFilters): DictionaryEntry[] => {
+  const search = (query: string, filters: SearchFilters, isLetterFilter = false): DictionaryEntry[] => {
     if (!query.trim()) return [];
     const normalizedQuery = query.toLowerCase().trim();
 
     return entries.filter(entry => {
       if (filters.category && entry.category !== filters.category) return false;
 
-      const matchesDialect = entry.dialectWord.toLowerCase().includes(normalizedQuery);
-      const matchesItalian = entry.italianWord.toLowerCase().includes(normalizedQuery);
-      const matchesExamples = entry.examples?.some(ex => ex.toLowerCase().includes(normalizedQuery));
-      const matchesDefinition = entry.definition?.toLowerCase().includes(normalizedQuery);
+      const matchFn = isLetterFilter
+        ? (text: string) => text.toLowerCase().startsWith(normalizedQuery)
+        : (text: string) => text.toLowerCase().includes(normalizedQuery);
+
+      const matchesDialect = matchFn(entry.dialectWord);
+      const matchesItalian = matchFn(entry.italianWord);
+      const matchesExamples = isLetterFilter
+        ? false
+        : entry.examples?.some(ex => ex.toLowerCase().includes(normalizedQuery));
+      const matchesDefinition = isLetterFilter
+        ? false
+        : entry.definition?.toLowerCase().includes(normalizedQuery);
 
       switch (filters.searchDirection) {
         case 'dialect-to-italian':

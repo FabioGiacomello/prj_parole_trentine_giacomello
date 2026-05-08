@@ -19,7 +19,7 @@ import {
 import { cn } from '@/lib/utils';
 
 interface SearchBarProps {
-  onSearch: (query: string, filters: SearchFilters) => void;
+  onSearch: (query: string, filters: SearchFilters, isLetterFilter?: boolean) => void;
   categories: GrammarCategory[];
   isLarge?: boolean;
 }
@@ -193,7 +193,8 @@ export function SearchBar({ onSearch, categories, isLarge = false }: SearchBarPr
             value={selectedLetter}
             onValueChange={(letter) => {
               setSelectedLetter(letter);
-              onSearch(letter, filters);
+              setQuery(letter);
+              onSearch(letter, filters, true);
             }}
           >
             <SelectTrigger className="w-auto min-w-[140px] md:min-w-[160px] h-10 rounded-lg text-xs md:text-sm flex-shrink-0">
