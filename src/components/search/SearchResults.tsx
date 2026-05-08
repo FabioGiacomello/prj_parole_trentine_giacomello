@@ -37,12 +37,17 @@ export function SearchResults({ results, query, onSelectWord }: SearchResultsPro
         {results.length} risultat{results.length === 1 ? 'o' : 'i'} per "{query}"
       </p>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {results.map(entry => (
-          <WordCard
+        {results.map((entry, index) => (
+          <div
             key={entry.id}
-            entry={entry}
-            onClick={() => onSelectWord(entry)}
-          />
+            className="animate-slide-in-up"
+            style={{ animationDelay: `${index * 0.05}s`, animationFillMode: 'both' }}
+          >
+            <WordCard
+              entry={entry}
+              onClick={() => onSelectWord(entry)}
+            />
+          </div>
         ))}
       </div>
     </div>

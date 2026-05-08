@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Layout } from '@/components/layout/Layout';
 import { SearchBar } from '@/components/search/SearchBar';
@@ -9,11 +9,13 @@ import { useSearchHistory } from '@/hooks/useSearchHistory';
 import { useWordViews } from '@/hooks/useWordViews';
 import { DictionaryEntry, SearchFilters } from '@/types/dictionary';
 import { Book, Sigma, Sparkles, Users, Volume2 } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 
 export default function Index() {
   const { entries, search, getSimilarWords, categories, totalCount, loading } = useDictionary();
-  const { addToHistory, getMostSearched } = useSearchHistory();
+  const { addToHistory } = useSearchHistory();
   const { incrementWordView, getMostViewedWords } = useWordViews();
+  const [searchParams] = useSearchParams();
   const [results, setResults] = useState<DictionaryEntry[]>([]);
   const [currentQuery, setCurrentQuery] = useState('');
   const [selectedWord, setSelectedWord] = useState<DictionaryEntry | null>(null);
@@ -44,6 +46,16 @@ export default function Index() {
   }, [entries]);
 
   const mostViewed = getMostViewedWords(5);
+
+  useEffect(() => {
+    const urlQuery = searchParams.get('q');
+    if (!urlQuery || !entries.length) return;
+
+    const searchResults = search(urlQuery, { searchDirection: 'both' });
+    setResults(searchResults);
+    setCurrentQuery(urlQuery);
+    setHasSearched(true);
+  }, [searchParams, entries, search]);
 
   const handleSearch = (query: string, filters: SearchFilters, isLetterFilter = false) => {
     if (!query.trim()) {

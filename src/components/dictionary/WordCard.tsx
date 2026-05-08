@@ -1,6 +1,5 @@
 import { DictionaryEntry, GrammarCategory } from '@/types/dictionary';
 import { Volume2, ArrowRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
 interface WordCardProps {
@@ -36,7 +35,7 @@ export function WordCard({ entry, onClick }: WordCardProps) {
   return (
     <button
       onClick={onClick}
-      className="card-elevated w-full text-left p-5 rounded-xl border border-border hover:border-primary/30 transition-all duration-200 group"
+      className="card-elevated w-full text-left p-5 rounded-xl border border-border hover:border-primary/30 hover:scale-[1.02] transition-all duration-300 ease-out group"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
